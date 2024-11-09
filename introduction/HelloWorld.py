@@ -6,6 +6,7 @@ pygame.init()
 DISPLAYSURF = pygame.display.set_mode((400, 300)) #this is the width and height for the window
 pygame.display.set_caption('Hello World')
 
+#the loop is for event handling
 while True: #main game loop
     for event in pygame.event.get():
         if event.type == QUIT:
