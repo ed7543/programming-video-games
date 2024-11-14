@@ -1,4 +1,6 @@
-import random, pygame, sys
+import random
+import pygame
+import sys
 from pygame.locals import *
 
 # Initialize colors, shapes, and settings
@@ -8,14 +10,14 @@ windowheight = 480
 revealspeed = 8 #speed of boxes sliding reveals and covers
 boxsize = 40 #height and width of boxes in pixels
 gapsize = 10
-boardwidth = 10 #numbers of collums of icons
-boardheight = 7 #numbers of rows of icons
+boardwidth = 10 #number of columns of icons
+boardheight = 7 #number of rows of icons
 
 assert (boardwidth * boardheight) % 2 == 0, 'Board needs an even number of boxes for matching pairs'
 xmargin = int((windowwidth - (boardwidth * (boxsize + gapsize))) / 2)
 ymargin = int((windowheight - (boardheight * (boxsize + gapsize))) / 2)
 
-#colors RGB
+# Colors RGB
 gray = (100, 100, 100)
 navyblue = (60, 60, 100)
 white = (255, 255, 255)
@@ -166,8 +168,11 @@ def drawBoxCovers(board, boxes, coverage):
         pygame.draw.rect(displaysurf, backgroundcolor, (left, top, boxsize, boxsize))
         shape, color = getShapeAndColor(board, box[0], box[1])
         drawIcon(shape, color, box[0], box[1])
-        if coverage > 0: # Only draw the cover if there is coverage
+        # Adding color validation
+        if isinstance(color, tuple) and len(color) == 3:
             pygame.draw.rect(displaysurf, color, (left, top, coverage, boxsize))
+        else:
+            print(f"Invalid color: {color}")  # Debugging output
     pygame.display.update()
     FPSClock.tick(FPS)
 
@@ -190,45 +195,37 @@ def drawBoard(board, revealed):
                 pygame.draw.rect(displaysurf, backgroundcolor, (left, top, boxsize, boxsize)) # Draw covered box
             else:
                 shape, color = getShapeAndColor(board, boxx, boxy)
-                drawIcon(shape, color, boxx, boxy) # Draw revealed icon
+                drawIcon(shape, color, boxx, boxy)
 
 def drawHighlightBox(boxx, boxy):
     left, top = leftTopCoordsOfBox(boxx, boxy)
     pygame.draw.rect(displaysurf, highlightcolor, (left - 5, top - 5, boxsize + 10, boxsize + 10), 4)
 
 def startGameAnimation(board):
-    # Start game reveal animation
-    coveredboxes = generateRevealedBoxes(False)
-    boxestoreveal = []
-    for boxx in range(boardwidth):
-        for boxy in range(boardheight):
-            boxestoreveal.append((boxx, boxy))
-
-    revealBoxesAnimation(board, boxestoreveal)
-    coverBoxesAnimation(board, boxestoreveal)
-
-def hasWon(revealedboxes):
-    for row in revealedboxes:
-        if False in row:
-            return False
-    return True
+    # Initial random boxes animation
+    coveredBoxes = generateRevealedBoxes(False)
+    boxes = [(x, y) for x in range(boardwidth) for y in range(boardheight)]
+    random.shuffle(boxes)
+    boxGroups = [boxes[i:i + 8] for i in range(0, len(boxes), 8)]
+    for boxGroup in boxGroups:
+        revealBoxesAnimation(board, boxGroup)
+        coverBoxesAnimation(board, boxGroup)
 
 def gameWonAnimation(board):
-    # Animation for game won
+    # Flashes the background color when the player wins
+    coveredBoxes = generateRevealedBoxes(True)
+    color1 = lightbackgroundcolor
+    color2 = backgroundcolor
     for i in range(13):
-        for boxx in range(boardwidth):
-            for boxy in range(boardheight):
-                left, top = leftTopCoordsOfBox(boxx, boxy)
-                pygame.draw.rect(displaysurf, green, (left, top, boxsize, boxsize), 4)
-        pygame.display.update()
-        pygame.time.wait(300)
-        for boxx in range(boardwidth):
-            for boxy in range(boardheight):
-                left, top = leftTopCoordsOfBox(boxx, boxy)
-                pygame.draw.rect(displaysurf, backgroundcolor, (left, top, boxsize, boxsize))
+        color1, color2 = color2, color1
+        displaysurf.fill(color1)
+        drawBoard(board, coveredBoxes)
         pygame.display.update()
         pygame.time.wait(300)
 
-# Run the game
+def hasWon(revealedBoxes):
+    # Returns True if all boxes are revealed, False otherwise
+    return all(all(row) for row in revealedBoxes)
+
 if __name__ == '__main__':
     main()
